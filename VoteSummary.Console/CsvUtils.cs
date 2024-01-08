@@ -6,29 +6,28 @@ namespace VoteSummary.Console
 {
     public static class CsvUtils
     {
-        public static void SaveToCsv<T>(IEnumerable<T> results, string filePath)
+        public static void SaveToCsv<T>(IEnumerable<T> list, string filePath)
         {
             using var writer = new StreamWriter(filePath);
             using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
 
-            csv.WriteRecords(results);
+            csv.WriteRecords(list);
         }
 
-        // Read async cause there can exist a very huge number of VoteResults
-        public static async IAsyncEnumerable<VoteResult> ReadVoteResults()
+        public static async Task<IEnumerable<T>> ReadCsv<T>(string filePath)
         {
-            using var reader = new StreamReader("vote_results.csv");
+            using var reader = new StreamReader(filePath);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
-            await csv.ReadAsync();
-            csv.ReadHeader();
+            var list = new List<T>();
 
             while (await csv.ReadAsync())
             {
-                var record = csv.GetRecord<VoteResult>();
+                var record = csv.GetRecord<T>();
                 if (record != null)
-                    yield return record;
+                    list.Add(record);
             }
+            return list;
         }
 
         // Read synch because Legislators are a fixed small number": all american legislators
@@ -39,8 +38,7 @@ namespace VoteSummary.Console
             using var reader = new StreamReader("legislators.csv");
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
-            await csv.ReadAsync();
-            csv.ReadHeader();
+            //csv.ReadHeader();
             var dict = new Dictionary<int, string>();
 
             while (await csv.ReadAsync())
@@ -51,5 +49,6 @@ namespace VoteSummary.Console
             }
             return dict;
         }
+
     }
 }
